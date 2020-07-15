@@ -39,22 +39,7 @@ class NowPlayingItemView: PKDetailView {
     
     private func updateContent() {
         
-        var appBundleIdentifier: String = self.nowPLayingItem?.appBundleIdentifier ?? ""
-        
-        switch (appBundleIdentifier) {
-        case "com.apple.WebKit.WebContent":
-            appBundleIdentifier = "com.apple.Safari"
-        case "com.spotify.client", "com.apple.iTunes", "com.apple.Safari", "com.google.Chrome", "com.netease.163music", "com.tencent.QQMusicMac",
-             "com.xiami.macclient", "com.apple.Music":
-            break
-        default:
-            if #available(macOS 10.15, *) {
-                appBundleIdentifier = "com.apple.Music"
-            }else {
-                appBundleIdentifier = "com.apple.iTunes"
-            }
-        }
-        
+        let appBundleIdentifier: String = "com.spotify.client"
         let path = NSWorkspace.shared.absolutePathForApplication(withBundleIdentifier: appBundleIdentifier)
         
         DispatchQueue.main.async { [weak self] in

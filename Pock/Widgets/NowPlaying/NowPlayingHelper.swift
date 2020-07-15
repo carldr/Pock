@@ -152,13 +152,8 @@ class NowPlayingHelper {
     
     
     var albumArtFallbackTimer: Timer? = nil
-    
     var lastUIUpdateNanos: UInt64? = nil
-    
-    // flag to indicate whether to fallback to network icon
-    var timesLeftTryUpdatingMediaContentManually: Int = 2
-
-    
+        
     @objc func fireTimerIconFailed() {
         albumArtFallbackTimer = nil
         if (self.nowPlayingItem.image == nil) {
@@ -178,16 +173,7 @@ class NowPlayingHelper {
         if self.albumArtFallbackTimer == nil {
             // fallback to network artwork after 20 seconds
             DispatchQueue.main.async {
-                if (self.timesLeftTryUpdatingMediaContentManually <= 0) {
-                    // we have tried getting the artwork with official api manually but it didn't work, get it from the iTunes API
-                    self.timesLeftTryUpdatingMediaContentManually = 2
-                    self.albumArtFallbackTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(NowPlayingHelper.fireTimerIconFailed), userInfo: nil, repeats: false)
-                } else {
-                    let timeInterval: Double = self.timesLeftTryUpdatingMediaContentManually == 2 ? 1.5 : 8.0
-                    
-                    self.timesLeftTryUpdatingMediaContentManually -= 1
-                    self.albumArtFallbackTimer = Timer.scheduledTimer(timeInterval: timeInterval, target: self, selector: #selector(NowPlayingHelper.updateMediaContent(sender:)), userInfo: ["fromTimer": true], repeats: false)
-                }
+                self.albumArtFallbackTimer = Timer.scheduledTimer(timeInterval: 0.0, target: self, selector: #selector(NowPlayingHelper.fireTimerIconFailed), userInfo: nil, repeats: false)
             }
         }
     }
@@ -207,7 +193,6 @@ class NowPlayingHelper {
                     previousDownloadTask.cancel()
                 }
             }
-            self.timesLeftTryUpdatingMediaContentManually = 2
             setupTimer()
         }
     }
@@ -261,7 +246,6 @@ class NowPlayingHelper {
                         self?.albumArtFallbackTimer?.invalidate()
                         self?.albumArtFallbackTimer = nil
                     }
-                    self?.timesLeftTryUpdatingMediaContentManually = 2
                     rerunTimer = false
                     // if image data is different update the UI
                     if let lastUIUpdateNanosVerified = self?.lastUIUpdateNanos {
@@ -330,7 +314,11 @@ class NowPlayingHelper {
 extension NowPlayingHelper {
     
     public func togglePlayingState() {
-        MRMediaRemoteSendCommand(kMRTogglePlayPause, nil)
+        if self.nowPlayingItem.appBundleIdentifier == nil {
+            NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/Spotify.app"))
+        } else {
+            MRMediaRemoteSendCommand(kMRTogglePlayPause, nil)
+        }
     }
     
     public func skipToNextTrack() {
